@@ -1,0 +1,34 @@
+services:
+  backend:
+    build: ./backend
+    container_name: em-backend
+    restart: unless-stopped
+    expose:
+      - "8080"
+    networks:
+      - em-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/', timeout=2)\""]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: em-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - em-network
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  em-network:
+    driver: bridge
+    name: em-app-network
+
